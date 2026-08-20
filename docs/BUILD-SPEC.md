@@ -115,7 +115,7 @@ Filename: `%016d-seq-<opId>.json` — zero-padded seq sorts lexicographically = 
 | `ticket.released` | `{ "by": "claude-a" }` | release the lock |
 | `ticket.archived` | `{}` | hide from the default board (V1.1) |
 
-**Ticket ids:** sequential `T-1`, `T-2`, … assigned by the CLI (next = max existing + 1). Hand-writing agents check `board show` for the next number. If two `ticket.created` ops land with the same id, the projection keeps the first and renders a warning on the second — visible, not fatal.
+**Ticket ids:** sequential `T-1`, `T-2`, … assigned by the CLI (next = max existing + 1). The prefix is **configurable** — `ticketPrefix` in `config.json` (default `T`). A board owner can pick any prefix (e.g. `HDX-1`, `KAN-1`), Jira-style. Hand-writing agents check `board show` for the next number. If two `ticket.created` ops land with the same id, the projection keeps the first and renders a warning on the second — visible, not fatal.
 
 ### 3.4 README.md — the primer (full text, ships with `board init`)
 
@@ -151,6 +151,9 @@ Create `.kanban/ops/<seq>-<uuid>.json`:
 Op types: ticket.created, ticket.moved, ticket.updated,
 comment.added, ticket.claimed, ticket.released, ticket.archived.
 
+Ticket ids are <prefix>-<number>, prefix from config.json
+(default T, e.g. T-12).
+
 ## Columns
 todo → in-progress → review → done   (see config.json)
 
@@ -180,6 +183,7 @@ An agent that has never heard of the tool must find it, learn it, and use it cor
   "schema": 1,
   "board": "my-project",
   "columns": ["todo", "in-progress", "review", "done"],
+  "ticketPrefix": "T",
   "claimTimeout": "4h",
   "autoPush": false
 }
