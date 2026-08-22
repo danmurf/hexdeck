@@ -409,19 +409,22 @@ if the committed image drifted. The contract is pinned:
 
 `hexdeck web` serves the local web view at `http://127.0.0.1:8080`.
 One HTML page, no build step, no external assets. The page shows the
-board; drag a ticket to move it, type in the box on a ticket to
+board; drag a ticket to move it, click a card to open the ticket and
 comment. A changes panel lists every change, shows the staged diff,
 and holds the suggested commit message — edit it and press Commit.
 
 The page is a render, like `board.md` and `board.svg`: it is embedded
 in the binary as one deterministic HTML file, pinned by a golden test
 (`TestWebPageGolden`). Cards show id, title and the claim badge; a
-click on the title expands the description and comments — the ticket
-detail. The board cards carry no comment count; comments belong to the
+click on the title opens the ticket — a modal with the description,
+links, comments, and the op history, plus the comment form. The board
+cards carry no comment count; comments belong to the
 ticket view. The page never touches the
 board files itself — it talks to the API endpoints the server exposes:
 
 - `GET /api/state` — the projection.
+- `GET /api/history?ticket=T-1` — the ops for one ticket, newest
+  first, for the modal's history feed.
 - `POST /api/move` — move a ticket. Body: `{"ticket": "T-1", "to":
   "todo"}`.
 - `POST /api/comment` — add a comment. Body: `{"ticket": "T-1",

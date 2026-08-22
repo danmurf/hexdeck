@@ -73,10 +73,11 @@ as the CLI.
 
 ![The board in the browser](docs/web-board.png)
 
-Cards show the id, title and the claim badge. Click a title to expand
-the description and comments — the ticket detail:
+Cards show the id, title and the claim badge. Click a title to open
+the ticket — a full view with the description, links, comments,
+history, and the comment form:
 
-![Expanded card](docs/web-card-expanded.png)
+![Ticket view](docs/web-card-expanded.png)
 
 Type a comment on a ticket to add it to the board:
 

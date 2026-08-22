@@ -1,5 +1,5 @@
 # Board — hexdeck
-Updated: 2026-08-22T09:32:34Z · 0 backlog · 2 todo · 15 done
+Updated: 2026-08-22T10:36:51Z · 0 backlog · 3 todo · 15 done
 
 ## backlog
 
@@ -8,6 +8,8 @@ Updated: 2026-08-22T09:32:34Z · 0 backlog · 2 todo · 15 done
   Make the web view (hexdeck web) genuinely beautiful — modern SaaS board aesthetics: clean typography, spaced cards, smooth hover/transition states, badge styling, empty-column placeholders, subtle shadows. Then apply the same design language to the generated board.svg (docs/board.svg + repo board.svg): same visual language so both surfaces look like the same product. Reference the popular-web-designs skill for proven SaaS patterns. Benchmark: Linear or Vercel-level polish.
 - T-17 Web board cards should not carry the comment form — comments belong to the ticket detail view
   T-12 moved comments off the board into the ticket view, but the web page still renders an Add-comment form on every collapsed board card. The form (and the comments) belong inside the expanded card detail — the web ticket view. Collapsed cards: id, title, badges only.
+- T-18 Web ticket modal: opening a ticket shows the full ticket view (Jira/Linear style)
+  Clicking a ticket card opens a full-size modal: description, status, labels, links, claim, comments, and a comment form. Ticket history too. Collapsed board cards stay id/title/badges only.
 
 ## done
 - T-1 Migrate the build tracker into the board

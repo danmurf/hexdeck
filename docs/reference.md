@@ -106,10 +106,11 @@ too, once it exists.
 ### web
 
 Serves the local web view at `http://127.0.0.1:8080` (change the port
-with `--port`). The page shows the board; drag a ticket to move it,
-type in the box on a ticket to comment. Cards carry the id, title, and
-claim; clicking the title expands the description and comments — the
-ticket detail. Every change is an op, staged
+with `--port`). The page shows the board; drag a ticket to move it.
+Cards carry the id, title, and
+claim; clicking the title opens the ticket — a modal with the
+description, links, comments, the op history, and the comment form.
+Every change is an op, staged
 in git, and listed in the changes panel with the staged diff and the
 suggested commit message. Edit the message and press Commit — the
 changes land in one commit. The web view writes through the same path

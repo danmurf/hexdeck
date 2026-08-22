@@ -187,8 +187,9 @@ hexdeck web
 ```
 
 Opens `http://127.0.0.1:8080` in your browser. The page shows the
-board. Drag a ticket to another column to move it. Type in the box on
-a ticket to comment.
+board. Drag a ticket to another column to move it. Click a card to
+open the ticket — the description, links, comments, and history — and
+comment from there.
 
 Every change is an op, staged in git, and listed in the changes panel
 on the right — with the staged diff and the suggested commit message.

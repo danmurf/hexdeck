@@ -161,6 +161,21 @@
       "created": "2026-08-22T07:50:33Z",
       "archived": false
     },
+    "T-18": {
+      "id": "T-18",
+      "title": "Web ticket modal: opening a ticket shows the full ticket view (Jira/Linear style)",
+      "description": "Clicking a ticket card opens a full-size modal: description, status, labels, links, claim, comments, and a comment form. Ticket history too. Collapsed board cards stay id/title/badges only.",
+      "status": "todo",
+      "comments": [
+        {
+          "ts": "2026-08-22T10:36:51Z",
+          "actor": "danmurf-hermes",
+          "text": "Ticket modal shipped (inline, 22 Aug): clicking a card opens a full modal with description, links, comments, history, and the comment form. Collapsed cards are id/title/badges only. Screenshots re-shot in the same commit."
+        }
+      ],
+      "created": "2026-08-22T10:24:47Z",
+      "archived": false
+    },
     "T-2": {
       "id": "T-2",
       "title": "Run the build worker against the board",
@@ -330,5 +345,5 @@
     "ticket.moved for T-9: from \"todo\" does not match current status \"backlog\"",
     "ticket.moved for T-10: from \"todo\" does not match current status \"backlog\""
   ],
-  "updated": "2026-08-22T09:32:34Z"
+  "updated": "2026-08-22T10:36:51Z"
 }

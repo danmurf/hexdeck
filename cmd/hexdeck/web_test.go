@@ -169,31 +169,67 @@ func TestWebPageNoCommentBadge(t *testing.T) {
 	}
 }
 
-// TestWebCommentFormOnlyOnDetail checks the T-12 contract for the web
-// page: the Add-comment form is part of the ticket detail (the expanded
-// card), never the collapsed board card. The form markup must sit
-// inside the .details block — before its closing '</div>' — so a
-// collapsed card is id, title and badges only.
-func TestWebCommentFormOnlyOnDetail(t *testing.T) {
+// TestWebCommentFormOnlyInModal checks the T-18 contract for the web
+// page: the Add-comment form lives in the ticket modal, never on a
+// board card. A collapsed card is id, title and badges only — the
+// modal is the ticket view (description, links, comments, history).
+func TestWebCommentFormOnlyInModal(t *testing.T) {
 	page := string(webPage)
-	details := strings.Index(page, `class="details"`)
+	modal := strings.Index(page, `id="modal"`)
 	form := strings.Index(page, `class="comment-form"`)
-	// The details block is unconditional and closes with '</div>' + —
-	// the last such close in the card template (the id and title divs
-	// close with '</div>' + earlier; the card itself closes with
-	// '</div>'; and the inner ternaries with '</div>' : "").
-	closeDetail := strings.LastIndex(page, `'</div>' +`)
-	if details == -1 {
-		t.Fatalf("web page lost the ticket detail block")
+	if modal == -1 {
+		t.Fatalf("web page lost the ticket modal")
 	}
 	if form == -1 {
 		t.Fatalf("web page lost the comment form")
 	}
-	if closeDetail == -1 {
-		t.Fatalf("web page lost the details block closing")
+	if !(modal < form) {
+		t.Errorf("comment form sits outside the modal — the board still offers comments on cards")
 	}
-	if !(details < form && form < closeDetail) {
-		t.Errorf("comment form is outside the details block — collapsed board cards still offer comments")
+	// The card template itself must not carry the form: between
+	// cardHTML and the modal opener there is no comment-form.
+	cardFn := strings.Index(page, "function cardHTML")
+	modalFn := strings.Index(page, "function modalHTML")
+	if cardFn == -1 || modalFn == -1 {
+		t.Fatalf("web page lost cardHTML or modalHTML")
+	}
+	if strings.Contains(page[cardFn:modalFn], "comment-form") {
+		t.Errorf("cardHTML still renders the comment form — collapsed cards must be id, title, badges only")
+	}
+}
+
+// TestWebHistory checks GET /api/history?ticket=T-1 returns the ops
+// for that ticket, newest first — the modal's history feed.
+func TestWebHistory(t *testing.T) {
+	s, _ := newWebTestServer(t)
+	// Move T-1 so the ticket has more than one op.
+	rec := doJSON(t, s, "POST", "/api/move", map[string]string{"ticket": "T-1", "to": "todo"})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("move: status %d\n%s", rec.Code, rec.Body.String())
+	}
+	rec = doJSON(t, s, "GET", "/api/history?ticket=T-1", nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("history: status %d\n%s", rec.Code, rec.Body.String())
+	}
+	var out struct {
+		Ops []hexdeck.Op `json:"ops"`
+	}
+	decodeJSON(t, rec, &out)
+	if len(out.Ops) < 2 {
+		t.Fatalf("history ops = %d, want at least 2 (created + move)", len(out.Ops))
+	}
+	if out.Ops[0].Seq < out.Ops[len(out.Ops)-1].Seq {
+		t.Errorf("history not newest-first: seq %d before %d", out.Ops[0].Seq, out.Ops[len(out.Ops)-1].Seq)
+	}
+	for _, op := range out.Ops {
+		if op.Ticket != "T-1" {
+			t.Errorf("history includes op for %s, want only T-1", op.Ticket)
+		}
+	}
+	// Unknown ticket is an error, not an empty 200.
+	rec = doJSON(t, s, "GET", "/api/history?ticket=T-99", nil)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("history for unknown ticket: status %d, want 404", rec.Code)
 	}
 }
 

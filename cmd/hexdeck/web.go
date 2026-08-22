@@ -70,6 +70,31 @@ main { display:flex; gap:16px; padding:20px 24px; align-items:flex-start; }
 #commit:hover { background:#4c58c4; }
 #commit:disabled { background:#b9bfea; cursor:default; }
 #status { font-size:12px; color:var(--meta); margin-top:8px; min-height:16px; }
+#modal { display:none; position:fixed; inset:0; background:rgba(16,24,40,.45); z-index:50; padding:40px 16px; overflow-y:auto; }
+#modal.open { display:block; }
+.modal-box { background:var(--card); border-radius:14px; max-width:680px; margin:0 auto; box-shadow:0 24px 64px rgba(16,24,40,.25); }
+.modal-head { display:flex; align-items:flex-start; gap:12px; padding:18px 22px; border-bottom:1px solid var(--border); }
+.modal-head .ids { font-size:12px; color:var(--accent); font-weight:600; letter-spacing:.02em; }
+.modal-head h2 { margin:2px 0 0; font-size:18px; letter-spacing:-.01em; }
+.modal-close { margin-left:auto; border:0; background:var(--bg); border-radius:8px; width:28px; height:28px; cursor:pointer; font-size:15px; color:var(--meta); }
+.modal-close:hover { background:var(--border); }
+.modal-body { padding:18px 22px; }
+.modal-body h3 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--meta); margin:18px 0 6px; }
+.modal-body .desc { color:var(--text); margin:0 0 6px; }
+.modal .links { display:flex; flex-wrap:wrap; gap:6px; }
+.modal .link { font-size:12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:2px 8px; color:var(--meta); }
+.modal .link b { color:var(--text); font-weight:600; }
+.modal .comment { font-size:13px; margin:0 0 8px; }
+.modal .comment .who { font-weight:600; }
+.modal .comment .when { font-size:11px; color:var(--meta); margin-left:6px; }
+.modal .comment-form { display:flex; gap:6px; margin-top:10px; }
+.modal .comment-form input { flex:1; border:1px solid var(--border); border-radius:8px; padding:6px 10px; font:inherit; }
+.modal .comment-form button { border:1px solid var(--accent); background:var(--accent); color:#fff; border-radius:8px; padding:6px 14px; cursor:pointer; }
+.modal .comment-form button:hover { background:#4c58c4; }
+.modal .history { font-size:12px; color:var(--meta); }
+.modal .history .ev { padding:4px 0; border-bottom:1px solid var(--bg); }
+.modal .history .ev .when { font-size:11px; margin-right:6px; }
+.modal .history .ev b { color:var(--text); font-weight:600; }
 </style>
 </head>
 <body>
@@ -85,6 +110,7 @@ main { display:flex; gap:16px; padding:20px 24px; align-items:flex-start; }
 <div id="status"></div>
 </aside>
 </main>
+<div id="modal"></div>
 <script>
 const state = { board:null, changes:[], message:"" };
 const $ = id => document.getElementById(id);
@@ -101,31 +127,55 @@ function cardHTML(t) {
   const badges = [];
   if (t.claimedBy) badges.push('<span class="badge claim">' + esc(t.claimedBy) + (t.claimStale ? " (stale)" : "") + '</span>');
   (t.labels || []).forEach(l => badges.push('<span class="badge label">' + esc(l) + '</span>'));
-  const comments = (t.comments || []).map(c =>
-    '<div class="comment"><span class="who">' + esc(c.actor) + '</span> <span class="when">' + esc(c.ts) + '</span><br>' + esc(c.text) + '</div>'
-  ).join("");
-  const links = [];
-  if (t.blocks && t.blocks.length) links.push('<div class="link">blocks: ' + t.blocks.map(esc).join(", ") + '</div>');
-  if (t.blockedBy && t.blockedBy.length) links.push('<div class="link">blocked by: ' + t.blockedBy.map(esc).join(", ") + '</div>');
-  if (t.related && t.related.length) links.push('<div class="link">related: ' + t.related.map(esc).join(", ") + '</div>');
   return '<div class="card" draggable="true" data-id="' + esc(t.id) + '">' +
     '<div class="id">' + esc(t.id) + '</div>' +
     '<div class="title">' + esc(t.title) + '</div>' +
     (badges.length ? '<div class="meta">' + badges.join("") + '</div>' : "") +
-    '<div class="details" hidden>' +
-      (t.description ? '<div class="desc">' + esc(t.description) + '</div>' : "") +
-      (links.length ? '<div class="links">' + links.join("") + '</div>' : "") +
-      (comments ? '<div class="comments">' + comments + '</div>' : "") +
-      '<form class="comment-form" data-id="' + esc(t.id) + '">' +
-      '<input placeholder="comment…"><button>Add</button></form>' +
-      '</div>' +
+    '</div>';
+}
+function modalHTML(t) {
+  const badges = [];
+  if (t.claimedBy) badges.push('<span class="badge claim">' + esc(t.claimedBy) + (t.claimStale ? " (stale)" : "") + '</span>');
+  (t.labels || []).forEach(l => badges.push('<span class="badge label">' + esc(l) + '</span>'));
+  const links = [];
+  if (t.blocks && t.blocks.length) links.push('<span class="link"><b>blocks</b> ' + t.blocks.map(esc).join(", ") + '</span>');
+  if (t.blockedBy && t.blockedBy.length) links.push('<span class="link"><b>blocked by</b> ' + t.blockedBy.map(esc).join(", ") + '</span>');
+  if (t.related && t.related.length) links.push('<span class="link"><b>related</b> ' + t.related.map(esc).join(", ") + '</span>');
+  const comments = (t.comments || []).map(c =>
+    '<div class="comment"><span class="who">' + esc(c.actor) + '</span><span class="when">' + esc(c.ts) + '</span><br>' + esc(c.text) + '</div>'
+  ).join("");
+  return '<div class="modal-head"><div><div class="ids">' + esc(t.id) + '</div>' +
+    '<h2>' + esc(t.title) + '</h2>' + (badges.length ? '<div class="meta">' + badges.join("") + '</div>' : "") + '</div>' +
+    '<button class="modal-close" aria-label="Close">&times;</button></div>' +
+    '<div class="modal-body">' +
+    (t.description ? '<h3>Description</h3><p class="desc">' + esc(t.description) + '</p>' : "") +
+    (links.length ? '<h3>Links</h3><div class="links">' + links.join("") + '</div>' : "") +
+    (comments ? '<h3>Comments</h3><div class="comments">' + comments + '</div>' : "") +
+    '<h3>History</h3><div class="history" id="history">…</div>' +
+    '<form class="comment-form" data-id="' + esc(t.id) + '">' +
+    '<input placeholder="Add a comment…"><button>Add</button></form>' +
     '</div>';
 }
 document.addEventListener("click", e => {
   const title = e.target.closest(".card .title");
   if (!title) return;
-  const details = title.parentElement.querySelector(".details");
-  if (details) details.hidden = !details.hidden;
+  const id = title.parentElement.dataset.id;
+  const t = state.board.tickets[id];
+  if (!t) return;
+  $("modal").innerHTML = modalHTML(t);
+  $("modal").classList.add("open");
+  api("/api/history?ticket=" + encodeURIComponent(id)).then(h => {
+    $("history").innerHTML = h.ops.map(op =>
+      '<div class="ev"><span class="when">' + esc(op.ts) + '</span><b>' + esc(op.actor) + '</b> ' + esc(op.type) + '</div>'
+    ).join("");
+  }).catch(() => { $("history").textContent = "history unavailable"; });
+});
+document.addEventListener("click", e => {
+  const close = e.target.closest(".modal-close");
+  if (close) $("modal").classList.remove("open");
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $("modal").classList.contains("open")) $("modal").classList.remove("open");
 });
 function render() {
   const b = state.board;
@@ -257,6 +307,7 @@ func (s *webServer) mux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handlePage)
 	mux.HandleFunc("/api/state", s.handleState)
+	mux.HandleFunc("/api/history", s.handleHistory)
 	mux.HandleFunc("/api/move", s.handleMove)
 	mux.HandleFunc("/api/comment", s.handleComment)
 	mux.HandleFunc("/api/changes", s.handleChanges)
@@ -282,6 +333,44 @@ func (s *webServer) handleState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, state)
+}
+
+// handleHistory serves the op history for one ticket, newest first —
+// the modal's history feed. The ticket must exist.
+func (s *webServer) handleHistory(w http.ResponseWriter, r *http.Request) {
+	ticket := r.URL.Query().Get("ticket")
+	if ticket == "" {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("ticket is required"))
+		return
+	}
+	state, err := hexdeck.Project(s.boardDir)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if _, ok := state.Tickets[ticket]; !ok {
+		writeError(w, http.StatusNotFound, fmt.Errorf("ticket %s does not exist", ticket))
+		return
+	}
+	ops, warnings, err := hexdeck.ReadOpsDir(filepath.Join(s.boardDir, "ops"))
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	var feed []hexdeck.Op
+	for _, op := range ops {
+		if op.Ticket == ticket {
+			feed = append(feed, op)
+		}
+	}
+	// Newest first — the modal shows the latest activity on top.
+	for i, j := 0, len(feed)-1; i < j; i, j = i+1, j-1 {
+		feed[i], feed[j] = feed[j], feed[i]
+	}
+	writeJSON(w, struct {
+		Ops      []hexdeck.Op `json:"ops"`
+		Warnings []string     `json:"warnings"`
+	}{Ops: feed, Warnings: warnings})
 }
 
 // handleMove moves a ticket. The body is {"ticket": "T-1", "to":
